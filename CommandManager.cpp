@@ -15,7 +15,7 @@
     This file also contains a test in main() demonstrating example messages,
     followed by optional interactive input for manual testing.
 
-    Developed as a technical assesment using C++17 in Visual Studio 2019.
+    Developed as a technical assessment using C++17 in Visual Studio 2019.
 */
 
 #include <iostream>
