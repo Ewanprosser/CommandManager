@@ -37,20 +37,20 @@ void updateHistory(std::deque<std::string>& strHistory, const std::string& strOp
 }
 
 //Main function to parse command manager messages.
-void parseCommand(const std::string& input, std::deque<std::string>& strHistory) {
+void parseCommand(const std::string& strInput, std::deque<std::string>& strHistory) {
 
     //Bool Identifier to check whether the opcode is recognised, if it's not we don't want to add it to the history.
-    bool recognised = false;
+    bool bRecognised = false;
 
     //Check whether the message ends in a #
-    if (input.empty() || input.back() != '#') {
+    if (strInput.empty() || strInput.back() != '#') {
         return;
     }
     //If the length of the input if over 11, it has enough characters to be a valid opcode (10 for the opcode plus #), proceed with handling.
-    if (input.length() >= 11) {
-        //Extract the opcod from the first 10 letters of the input, and then anything past that extract as the message content.
-        std::string strOpCode = input.substr(0, 10);
-        std::string strMessageContent = input.substr(10);
+    if (strInput.length() >= 11) {
+        //Extract the opcode from the first 10 letters of the input, and then anything past that extract as the message content.
+        std::string strOpCode = strInput.substr(0, 10);
+        std::string strMessageContent = strInput.substr(10);
 
         //If the message content is not empty and the last character is a #, remove the #.
         if (!strMessageContent.empty() && strMessageContent.back() == '#') {
@@ -59,12 +59,12 @@ void parseCommand(const std::string& input, std::deque<std::string>& strHistory)
 
         //If the opcode is RUN_NO____ print the run number, set recognised to true
         if (strOpCode == "RUN_NO____") {
-            recognised = true;
+            bRecognised = true;
             //Convert the message content to an int and check whether it's a valid number.
             try {
-                int runNumber = std::stoi(strMessageContent);
+                int iRunNumber = std::stoi(strMessageContent);
                 //Print run number to console. 
-                std::cout << "Run number: " << runNumber << "\n";
+                std::cout << "Run number: " << iRunNumber << "\n";
             }
             //If it's not a valid number show exception message.
             catch (const std::exception&) {
@@ -74,12 +74,12 @@ void parseCommand(const std::string& input, std::deque<std::string>& strHistory)
         }
         //if the opcode is POLAR_NO__ print the polar number, set recognised to true
         else if (strOpCode == "POLAR_NO__") {
-            recognised = true;
+            bRecognised = true;
             //Convert the message content to an int and check whether it's a valid number.
             try {
-                int polarNumber = std::stoi(strMessageContent);
+                int iPolarNumber = std::stoi(strMessageContent);
                 //Print polar number to console. 
-                std::cout << "Polar number: " << polarNumber << "\n";
+                std::cout << "Polar number: " << iPolarNumber << "\n";
             }
             //If it's not a valid number show exception message.
             catch (const std::exception&) {
@@ -89,43 +89,43 @@ void parseCommand(const std::string& input, std::deque<std::string>& strHistory)
         }
         //if the opcode is USR_MSG___ print the message contents.
         else if (strOpCode == "USR_MSG___") {
-            recognised = true;
+            bRecognised = true;
             //Print message contents to console. 
             std::cout << strMessageContent << "\n";
         }
         //if the OpCode is D_USR_FLD_, print the list of parameter names and values.
         else if (strOpCode == "D_USR_FLD_") {
-            recognised = true;
+            bRecognised = true;
             //Split the message content on commas to extract parameter names and values, removing the commas. Store in a vector.
-            std::vector<std::string> tokens;
-            std::stringstream ss(strMessageContent);
+            std::vector<std::string> vecTokens;
+            std::stringstream ssMessageContent(strMessageContent);
             std::string strToken;
-            while (std::getline(ss, strToken, ',')) {
+            while (std::getline(ssMessageContent, strToken, ',')) {
                 //Ignore empty tokens while tokenising
                 if (!strToken.empty()) {
-                    tokens.push_back(strToken);
+                    vecTokens.push_back(strToken);
                 }
             }
             //Check whether we have an equal number of parameter names and parameter values.
-            if (tokens.size() % 2 != 0) {
+            if (vecTokens.size() % 2 != 0) {
                 return;
             }
-            //Loop through the vector token list in pairs ( parameter name, paramete value ) and print each value.
+            //Loop through the vector token list in pairs ( parameter name, parameter value ) and print each value.
             std::cout << "Parameters:\n";
-            for (size_t i = 0; i + 1 < tokens.size(); i += 2) {
+            for (size_t i = 0; i + 1 < vecTokens.size(); i += 2) {
                 // Check parameter name length (max 15 characters)
-                if (tokens[i].length() > 15) {
-                    std::cout << "Parameter name too long: " << tokens[i] << "\n";
+                if (vecTokens[i].length() > 15) {
+                    std::cout << "Parameter name too long: " << vecTokens[i] << "\n";
                     continue;  // Skip this pair and move to the next one
                 }
                 //Attempt to convert the parameter value to a double. If it fails, it's not a number and is therefore invalid.
                 try {
-                    std::string strParmName = tokens[i];
-                    double dblParmValue = std::stod(tokens[i + 1]);
+                    std::string strParmName = vecTokens[i];
+                    double dblParmValue = std::stod(vecTokens[i + 1]);
                     std::cout << strParmName << " = " << dblParmValue << "\n";
                 }
                 catch (const std::exception&) {
-                    std::cout << "Invalid parameter value for parameter: " << tokens[i] << "\n";
+                    std::cout << "Invalid parameter value for parameter: " << vecTokens[i] << "\n";
                 }
             }
         }
@@ -138,10 +138,11 @@ void parseCommand(const std::string& input, std::deque<std::string>& strHistory)
         else {
             //The entry is not a valid OpCode - do nothing. 
         }
-    // Add only recognised opcodes to history (HISTORY___ and unknown opcodes are excluded)
-    if (recognised) {
-          updateHistory(strHistory, strOpCode);
-    }
+
+        // Add only recognised opcodes to history (HISTORY___ and unknown opcodes are excluded)
+        if (bRecognised) {
+              updateHistory(strHistory, strOpCode);
+        }
     }
 }
 
@@ -149,7 +150,7 @@ int main()
 {
     //Declare variables to be used in testing
     std::deque<std::string> strHistory;
-    std::string userInput;
+    std::string strUserInput;
 
     //Run a test example for each OpCode type, as well as an invalid opcode
     std::cout << "Running example Command Manager messages...\n\n";
@@ -171,11 +172,11 @@ int main()
     std::cout << "Enter command messages (type EXIT to quit):\n";
     //Program will keep allowing user to enter OpCodes until they enter EXIT.
     while (true) {
-        std::getline(std::cin, userInput);
-        if (userInput == "EXIT") {
+        std::getline(std::cin, strUserInput);
+        if (strUserInput == "EXIT") {
             break;
         }
-        parseCommand(userInput, strHistory);
+        parseCommand(strUserInput, strHistory);
     }
 
     return 0;
